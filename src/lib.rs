@@ -8,8 +8,10 @@ mod test;
 use ndarray::{Array, ArrayView, Axis, Ix0, Ix1, Ix2, Ix3, Ix4, Ix5, Ix6, IxDyn};
 use numpy::{
     ndarray::Dimension,
-    pyo3::{exceptions::PyValueError, FromPyObject, PyAny, PyResult, Python},
-    Element, IntoPyArray, PyArray, PyReadonlyArray,
+    pyo3::{
+        exceptions::PyValueError, types::PyAnyMethods, Bound, FromPyObject, PyAny, PyResult, Python,
+    },
+    Element, IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArray,
 };
 use std::fmt::Debug;
 
@@ -59,7 +61,7 @@ where
     pub fn into_pyarray(self) -> PyReadonlyArray<'py, T, D> {
         match self.0 {
             ArrayLike::PyRef(py_array) => py_array,
-            ArrayLike::Owned(array, py) => array.into_pyarray(py).readonly(),
+            ArrayLike::Owned(array, py) => array.into_pyarray_bound(py).readonly(),
         }
     }
 
@@ -94,10 +96,10 @@ where
 
 impl<'py, T, D> PyArrayLike<'py, T, D>
 where
-    T: Element + FromPyObject<'py>,
-    D: Dimension,
+    T: Element + FromPyObject<'py> + 'static,
+    D: Dimension + 'static,
 {
-    fn from_python(ob: &'py PyAny) -> Option<Self> {
+    fn from_python(ob: &Bound<'py, PyAny>) -> Option<Self> {
         if let Ok(array) = ob.downcast::<PyArray<T, D>>() {
             return Some(PyArrayLike(ArrayLike::PyRef(array.readonly())));
         }
@@ -121,7 +123,7 @@ where
             .ok()?
             .map(|item| {
                 item.ok()
-                    .and_then(<PyArrayLike<T, D::Smaller>>::from_python)
+                    .and_then(|ob| <PyArrayLike<T, D::Smaller>>::from_python(&ob))
             })
             .collect::<Option<Vec<_>>>()?;
         let sub_array_views = sub_arrays.iter().map(|x| x.view()).collect::<Vec<_>>();
@@ -135,12 +137,12 @@ where
 
 impl<'py, T, D> FromPyObject<'py> for PyArrayLike<'py, T, D>
 where
-    T: Element + FromPyObject<'py>,
-    D: Dimension,
+    T: Element + FromPyObject<'py> + 'static,
+    D: Dimension + 'static,
 {
-    fn extract(ob: &'py PyAny) -> PyResult<Self> {
+    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
         Self::from_python(ob).ok_or_else(|| {
-            let dtype = T::get_dtype(ob.py());
+            let dtype = T::get_dtype_bound(ob.py());
             let err_text = match D::NDIM {
                 Some(dim) => format!("Expected an array like of dimension {} containing elements which can be safely casted to {}.", dim, dtype),
                 None => format!("Expected an array like of arbitrary dimension containing elements which can be safely casted to {}.", dtype)

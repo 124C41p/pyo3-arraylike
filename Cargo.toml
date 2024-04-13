@@ -1,6 +1,6 @@
 [package]
 name = "pyo3-arraylike"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Erik Friese <e.friese0@gmail.com>"]
 description = "Convenience extension for rust-numpy"
@@ -13,9 +13,9 @@ readme = "README.md"
 
 [dependencies]
 ndarray = ">= 0.13, < 0.16"
-numpy = "0.19.0"
+numpy = "^0.21"
 
 [dev-dependencies]
-pyo3 = { version = "0.19", default-features = false, features = [
+pyo3 = { version = "^0.21", default-features = false, features = [
     "auto-initialize",
 ] }

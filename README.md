@@ -12,8 +12,8 @@ Consider the following function. It takes anything which "looks like" an array o
 
 ```rust
 #[pyfunction]
-fn sum_of_rows<'py>(py: Python<'py>, ar: PyArrayLike2<'py, u32>) -> &'py PyArray1<u32> {
-    ar.view().sum_axis(Axis(0)).into_pyarray(py)
+fn sum_of_rows<'py>(py: Python<'py>, ar: PyArrayLike2<'py, u32>) -> Bound<'py, PyArray1<u32>> {
+    ar.view().sum_axis(Axis(0)).into_pyarray_bound(py)
 }
 ```
 

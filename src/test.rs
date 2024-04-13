@@ -4,11 +4,12 @@ use numpy::{
     get_array_module,
     pyo3::{types::IntoPyDict, PyAny, Python},
 };
+use pyo3::{types::PyAnyMethods, Bound};
 
-fn eval<'py>(py: Python<'py>, code: &str) -> &'py PyAny {
-    py.eval(
+fn eval<'py>(py: Python<'py>, code: &str) -> Bound<'py, PyAny> {
+    py.eval_bound(
         code,
-        Some([("np", get_array_module(py).unwrap())].into_py_dict(py)),
+        Some(&[("np", get_array_module(py).unwrap())].into_py_dict_bound(py)),
         None,
     )
     .unwrap()
