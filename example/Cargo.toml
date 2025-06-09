@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-name = "example"
+name = "_core"
 crate-type = ["cdylib"]
 
 [dependencies]
-ndarray = "0.15.6"
-numpy = "0.21.0"
-pyo3 = "0.21.1"
+ndarray = "0.16.1"
+numpy = "0.25.0"
+pyo3 = { version = "0.25.0", features = ["extension-module"] }
 pyo3-arraylike = { path = ".." }

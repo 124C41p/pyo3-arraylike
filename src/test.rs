@@ -1,15 +1,21 @@
+use std::ffi::CStr;
+
 use crate::{ArrayLike, PyArrayLike0, PyArrayLike1, PyArrayLike2, PyArrayLikeDyn};
 use ndarray::{array, Array0};
 use numpy::{
     get_array_module,
     pyo3::{types::IntoPyDict, PyAny, Python},
 };
-use pyo3::{types::PyAnyMethods, Bound};
+use pyo3::{ffi::c_str, types::PyAnyMethods, Bound};
 
-fn eval<'py>(py: Python<'py>, code: &str) -> Bound<'py, PyAny> {
-    py.eval_bound(
+fn eval<'py>(py: Python<'py>, code: &CStr) -> Bound<'py, PyAny> {
+    py.eval(
         code,
-        Some(&[("np", get_array_module(py).unwrap())].into_py_dict_bound(py)),
+        Some(
+            &[("np", get_array_module(py).unwrap())]
+                .into_py_dict(py)
+                .expect("module `numpy` not found"),
+        ),
         None,
     )
     .unwrap()
@@ -18,7 +24,7 @@ fn eval<'py>(py: Python<'py>, code: &str) -> Bound<'py, PyAny> {
 #[test]
 fn extract_reference() {
     Python::with_gil(|py| {
-        let py_array = eval(py, "np.array([[1,2],[3,4]], dtype='float64')");
+        let py_array = eval(py, c_str!("np.array([[1,2],[3,4]], dtype='float64')"));
         let extracted_array = py_array.extract::<PyArrayLike2<f64>>().unwrap();
 
         assert!(matches!(extracted_array.0, ArrayLike::PyRef(_)));
@@ -32,7 +38,7 @@ fn extract_reference() {
 #[test]
 fn convert_array_on_extract() {
     Python::with_gil(|py| {
-        let py_array = eval(py, "np.array([[1,2],[3,4]], dtype='int')");
+        let py_array = eval(py, c_str!("np.array([[1,2],[3,4]], dtype='int')"));
         let extracted_array = py_array.extract::<PyArrayLike2<f64>>().unwrap();
 
         assert!(matches!(extracted_array.0, ArrayLike::Owned(_, _)));
@@ -46,7 +52,7 @@ fn convert_array_on_extract() {
 #[test]
 fn convert_list_on_extract() {
     Python::with_gil(|py| {
-        let py_list = eval(py, "[[1,2],[3,4]]");
+        let py_list = eval(py, c_str!("[[1,2],[3,4]]"));
         let extracted_array = py_list.extract::<PyArrayLike2<i32>>().unwrap();
 
         assert!(matches!(extracted_array.0, ArrayLike::Owned(_, _)));
@@ -57,7 +63,7 @@ fn convert_list_on_extract() {
 #[test]
 fn convert_array_in_list_on_extract() {
     Python::with_gil(|py| {
-        let py_array = eval(py, "[np.array([1, 2], dtype='int32'), [3, 4]]");
+        let py_array = eval(py, c_str!("[np.array([1, 2], dtype='int32'), [3, 4]]"));
         let extracted_array = py_array.extract::<PyArrayLike2<i32>>().unwrap();
 
         assert!(matches!(extracted_array.0, ArrayLike::Owned(_, _)));
@@ -68,7 +74,7 @@ fn convert_array_in_list_on_extract() {
 #[test]
 fn convert_list_on_extract_dyn() {
     Python::with_gil(|py| {
-        let py_list = eval(py, "[[[1,2],[3,4]],[[5,6],[7,8]]]");
+        let py_list = eval(py, c_str!("[[[1,2],[3,4]],[[5,6],[7,8]]]"));
         let extracted_array = py_list.extract::<PyArrayLikeDyn<i32>>().unwrap();
 
         assert!(matches!(extracted_array.0, ArrayLike::Owned(_, _)));
@@ -82,7 +88,7 @@ fn convert_list_on_extract_dyn() {
 #[test]
 fn convert_1d_list_on_extract() {
     Python::with_gil(|py| {
-        let py_list = eval(py, "[1,2,3,4]");
+        let py_list = eval(py, c_str!("[1,2,3,4]"));
         let extracted_array_1d = py_list.extract::<PyArrayLike1<u32>>().unwrap();
         let extracted_array_dyn = py_list.extract::<PyArrayLikeDyn<f64>>().unwrap();
 
@@ -99,7 +105,7 @@ fn convert_1d_list_on_extract() {
 #[test]
 fn unsafe_cast_shall_fail() {
     Python::with_gil(|py| {
-        let py_list = eval(py, "np.array([1.1,2.2,3.3,4.4], dtype='float64')");
+        let py_list = eval(py, c_str!("np.array([1.1,2.2,3.3,4.4], dtype='float64')"));
         let extracted_array = py_list.extract::<PyArrayLike1<i32>>();
 
         assert!(extracted_array.is_err());
@@ -109,8 +115,8 @@ fn unsafe_cast_shall_fail() {
 #[test]
 fn extract_0d_array() {
     Python::with_gil(|py| {
-        let array0 = eval(py, "np.array(1, dtype='int64')");
-        let num = eval(py, "42");
+        let array0 = eval(py, c_str!("np.array(1, dtype='int64')"));
+        let num = eval(py, c_str!("42"));
 
         let extraction1 = array0.extract::<PyArrayLike0<i32>>().unwrap();
         let extraction2 = num.extract::<PyArrayLike0<i32>>().unwrap();

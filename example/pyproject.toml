@@ -1,16 +1,16 @@
-[build-system]
-requires = ["maturin>=1.1,<2.0"]
-build-backend = "maturin"
 
 [project]
 name = "example"
-requires-python = ">=3.7"
-classifiers = [
-    "Programming Language :: Rust",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
-]
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = ["numpy~=2.3"]
 
 
 [tool.maturin]
-features = ["pyo3/extension-module"]
+module-name = "example._core"
+python-packages = ["example"]
+python-source = "src"
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"

@@ -61,7 +61,7 @@ where
     pub fn into_pyarray(self) -> PyReadonlyArray<'py, T, D> {
         match self.0 {
             ArrayLike::PyRef(py_array) => py_array,
-            ArrayLike::Owned(array, py) => array.into_pyarray_bound(py).readonly(),
+            ArrayLike::Owned(array, py) => array.into_pyarray(py).readonly(),
         }
     }
 
@@ -96,7 +96,7 @@ where
 
 impl<'py, T, D> PyArrayLike<'py, T, D>
 where
-    T: Element + FromPyObject<'py> + 'static,
+    T: Clone + Element + FromPyObject<'py> + 'static,
     D: Dimension + 'static,
 {
     fn from_python(ob: &Bound<'py, PyAny>) -> Option<Self> {
@@ -119,7 +119,7 @@ where
         }
 
         let sub_arrays = ob
-            .iter()
+            .try_iter()
             .ok()?
             .map(|item| {
                 item.ok()
@@ -131,18 +131,18 @@ where
             .ok()?
             .into_dimensionality()
             .ok()?;
-        return Some(PyArrayLike(ArrayLike::Owned(array, ob.py())));
+        Some(PyArrayLike(ArrayLike::Owned(array, ob.py())))
     }
 }
 
 impl<'py, T, D> FromPyObject<'py> for PyArrayLike<'py, T, D>
 where
-    T: Element + FromPyObject<'py> + 'static,
+    T: Clone + Element + FromPyObject<'py> + 'static,
     D: Dimension + 'static,
 {
     fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
         Self::from_python(ob).ok_or_else(|| {
-            let dtype = T::get_dtype_bound(ob.py());
+            let dtype = T::get_dtype(ob.py());
             let err_text = match D::NDIM {
                 Some(dim) => format!("Expected an array like of dimension {} containing elements which can be safely casted to {}.", dim, dtype),
                 None => format!("Expected an array like of arbitrary dimension containing elements which can be safely casted to {}.", dtype)
