@@ -23,7 +23,7 @@ fn eval<'py>(py: Python<'py>, code: &CStr) -> Bound<'py, PyAny> {
 
 #[test]
 fn extract_reference() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_array = eval(py, c_str!("np.array([[1,2],[3,4]], dtype='float64')"));
         let extracted_array = py_array.extract::<PyArrayLike2<f64>>().unwrap();
 
@@ -37,7 +37,7 @@ fn extract_reference() {
 
 #[test]
 fn convert_array_on_extract() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_array = eval(py, c_str!("np.array([[1,2],[3,4]], dtype='int')"));
         let extracted_array = py_array.extract::<PyArrayLike2<f64>>().unwrap();
 
@@ -51,7 +51,7 @@ fn convert_array_on_extract() {
 
 #[test]
 fn convert_list_on_extract() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_list = eval(py, c_str!("[[1,2],[3,4]]"));
         let extracted_array = py_list.extract::<PyArrayLike2<i32>>().unwrap();
 
@@ -62,7 +62,7 @@ fn convert_list_on_extract() {
 
 #[test]
 fn convert_array_in_list_on_extract() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_array = eval(py, c_str!("[np.array([1, 2], dtype='int32'), [3, 4]]"));
         let extracted_array = py_array.extract::<PyArrayLike2<i32>>().unwrap();
 
@@ -73,7 +73,7 @@ fn convert_array_in_list_on_extract() {
 
 #[test]
 fn convert_list_on_extract_dyn() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_list = eval(py, c_str!("[[[1,2],[3,4]],[[5,6],[7,8]]]"));
         let extracted_array = py_list.extract::<PyArrayLikeDyn<i32>>().unwrap();
 
@@ -87,7 +87,7 @@ fn convert_list_on_extract_dyn() {
 
 #[test]
 fn convert_1d_list_on_extract() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_list = eval(py, c_str!("[1,2,3,4]"));
         let extracted_array_1d = py_list.extract::<PyArrayLike1<u32>>().unwrap();
         let extracted_array_dyn = py_list.extract::<PyArrayLikeDyn<f64>>().unwrap();
@@ -104,7 +104,7 @@ fn convert_1d_list_on_extract() {
 
 #[test]
 fn unsafe_cast_shall_fail() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let py_list = eval(py, c_str!("np.array([1.1,2.2,3.3,4.4], dtype='float64')"));
         let extracted_array = py_list.extract::<PyArrayLike1<i32>>();
 
@@ -114,7 +114,7 @@ fn unsafe_cast_shall_fail() {
 
 #[test]
 fn extract_0d_array() {
-    Python::with_gil(|py| {
+    Python::attach(|py| {
         let array0 = eval(py, c_str!("np.array(1, dtype='int64')"));
         let num = eval(py, c_str!("42"));
 
