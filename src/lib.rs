@@ -72,6 +72,22 @@ where
             ArrayLike::Owned(array, _) => array.view(),
         }
     }
+
+    /// Return the array’s data as a slice, if it is contiguous and in standard order.
+    pub fn as_slice(&self) -> Option<&[T]> {
+        match &self.0 {
+            ArrayLike::PyRef(py_array) => py_array.as_slice().ok(),
+            ArrayLike::Owned(array, _) => array.as_slice(),
+        }
+    }
+
+    /// Return the array’s dimension
+    pub fn dim(&self) -> D::Pattern {
+        match &self.0 {
+            ArrayLike::PyRef(py_array) => py_array.dims().into_pattern(),
+            ArrayLike::Owned(array, _) => array.dim(),
+        }
+    }
 }
 
 impl<'py, T, D> From<PyArrayLike<'py, T, D>> for PyReadonlyArray<'py, T, D>
