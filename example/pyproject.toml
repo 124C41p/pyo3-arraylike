@@ -5,7 +5,6 @@ version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = ["numpy~=2.3"]
 
-
 [tool.maturin]
 module-name = "example._core"
 python-packages = ["example"]
@@ -14,3 +13,19 @@ python-source = "src"
 [build-system]
 requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
+
+[dependency-groups]
+dev = ["ruff>=0.12.0"]
+
+[tool.ruff]
+fix = true
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
+[tool.uv]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "Cargo.toml" },
+    { file = "src/**/*.rs" },
+]

@@ -8,7 +8,7 @@ name = "_core"
 crate-type = ["cdylib"]
 
 [dependencies]
-ndarray = "0.16.1"
-numpy = "0.25.0"
-pyo3 = { version = "0.25.0", features = ["extension-module"] }
+ndarray = "0.16"
+numpy = "0.27"
+pyo3 = { version = "0.27", features = ["extension-module"] }
 pyo3-arraylike = { path = ".." }
