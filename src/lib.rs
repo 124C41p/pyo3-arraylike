@@ -9,7 +9,7 @@ use ndarray::{Array, ArrayView, Axis, Ix0, Ix1, Ix2, Ix3, Ix4, Ix5, Ix6, IxDyn};
 use numpy::{
     ndarray::Dimension,
     pyo3::{
-        exceptions::PyValueError, types::PyAnyMethods, Bound, FromPyObject, PyAny, PyResult, Python,
+        exceptions::PyValueError, types::PyAnyMethods, Bound, Borrowed, PyAny, PyErr, PyResult, FromPyObject, Python, prelude::FromPyObjectOwned
     },
     Element, IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArray,
 };
@@ -66,7 +66,7 @@ where
     }
 
     /// Return a read-only view of the array.
-    pub fn view(&self) -> ArrayView<T, D> {
+    pub fn view<'s>(&'s self) -> ArrayView<'s, T, D> {
         match &self.0 {
             ArrayLike::PyRef(py_array) => py_array.as_array(),
             ArrayLike::Owned(array, _) => array.view(),
@@ -96,11 +96,11 @@ where
 
 impl<'py, T, D> PyArrayLike<'py, T, D>
 where
-    T: Clone + Element + FromPyObject<'py> + 'static,
+    T: Clone + Element + FromPyObjectOwned<'py> + 'static,
     D: Dimension + 'static,
 {
     fn from_python(ob: &Bound<'py, PyAny>) -> Option<Self> {
-        if let Ok(array) = ob.downcast::<PyArray<T, D>>() {
+        if let Ok(array) = ob.cast::<PyArray<T, D>>() {
             return Some(PyArrayLike(ArrayLike::PyRef(array.readonly())));
         }
 
@@ -135,13 +135,15 @@ where
     }
 }
 
-impl<'py, T, D> FromPyObject<'py> for PyArrayLike<'py, T, D>
+impl<'py, T, D> FromPyObject<'_, 'py> for PyArrayLike<'py, T, D>
 where
-    T: Clone + Element + FromPyObject<'py> + 'static,
+    T: Clone + Element + FromPyObjectOwned<'py> + 'static,
     D: Dimension + 'static,
 {
-    fn extract_bound(ob: &Bound<'py, PyAny>) -> PyResult<Self> {
-        Self::from_python(ob).ok_or_else(|| {
+    type Error = PyErr;
+
+    fn extract(ob: Borrowed<'_, 'py, PyAny>) -> PyResult<Self> {
+        Self::from_python(&ob).ok_or_else(|| {
             let dtype = T::get_dtype(ob.py());
             let err_text = match D::NDIM {
                 Some(dim) => format!("Expected an array like of dimension {} containing elements which can be safely casted to {}.", dim, dtype),
