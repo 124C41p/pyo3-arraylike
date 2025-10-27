@@ -9,7 +9,7 @@ use ndarray::{Array, ArrayView, Axis, Ix0, Ix1, Ix2, Ix3, Ix4, Ix5, Ix6, IxDyn};
 use numpy::{
     ndarray::Dimension,
     pyo3::{
-        exceptions::PyValueError, types::PyAnyMethods, Bound, Borrowed, PyAny, PyErr, PyResult, FromPyObject, Python, prelude::FromPyObjectOwned
+        exceptions::PyValueError, types::PyAnyMethods, Bound, Borrowed, PyAny, PyErr, PyResult, FromPyObject, Python
     },
     Element, IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArray,
 };
@@ -112,7 +112,7 @@ where
 
 impl<'py, T, D> PyArrayLike<'py, T, D>
 where
-    T: Clone + Element + FromPyObjectOwned<'py> + 'static,
+    T: Clone + Element + 'static + for<'a> FromPyObject<'a, 'py>,
     D: Dimension + 'static,
 {
     fn from_python(ob: &Bound<'py, PyAny>) -> Option<Self> {
@@ -153,7 +153,7 @@ where
 
 impl<'py, T, D> FromPyObject<'_, 'py> for PyArrayLike<'py, T, D>
 where
-    T: Clone + Element + FromPyObjectOwned<'py> + 'static,
+    T:  Clone + Element + 'static + for<'a> FromPyObject<'a, 'py>,
     D: Dimension + 'static,
 {
     type Error = PyErr;
