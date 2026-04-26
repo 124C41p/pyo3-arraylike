@@ -1,12 +1,12 @@
 use std::ffi::CStr;
 
 use crate::{ArrayLike, PyArrayLike0, PyArrayLike1, PyArrayLike2, PyArrayLikeDyn};
-use ndarray::{array, Array0};
+use ndarray::{Array0, array};
 use numpy::{
     get_array_module,
-    pyo3::{types::IntoPyDict, PyAny, Python},
+    pyo3::{PyAny, Python, types::IntoPyDict},
 };
-use pyo3::{ffi::c_str, types::PyAnyMethods, Bound};
+use pyo3::{Bound, ffi::c_str, types::PyAnyMethods};
 
 fn eval<'py>(py: Python<'py>, code: &CStr) -> Bound<'py, PyAny> {
     py.eval(

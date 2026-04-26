@@ -7,12 +7,12 @@ mod test;
 
 use ndarray::{Array, ArrayView, Axis, Ix0, Ix1, Ix2, Ix3, Ix4, Ix5, Ix6, IxDyn};
 use numpy::{
+    Element, IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArray,
     ndarray::Dimension,
     pyo3::{
-        exceptions::PyValueError, types::PyAnyMethods, Borrowed, Bound, FromPyObject, PyAny, PyErr,
-        PyResult, Python,
+        Borrowed, Bound, FromPyObject, PyAny, PyErr, PyResult, Python, exceptions::PyValueError,
+        types::PyAnyMethods,
     },
-    Element, IntoPyArray, PyArray, PyArrayMethods, PyReadonlyArray,
 };
 use std::fmt::Debug;
 
@@ -121,18 +121,18 @@ where
             return Some(PyArrayLike(ArrayLike::PyRef(array.readonly())));
         }
 
-        if matches!(D::NDIM, None | Some(0)) {
-            if let Ok(value) = ob.extract::<T>() {
-                let res = Array::from_elem((), value).into_dimensionality().ok()?;
-                return Some(PyArrayLike(ArrayLike::Owned(res, ob.py())));
-            }
+        if matches!(D::NDIM, None | Some(0))
+            && let Ok(value) = ob.extract::<T>()
+        {
+            let res = Array::from_elem((), value).into_dimensionality().ok()?;
+            return Some(PyArrayLike(ArrayLike::Owned(res, ob.py())));
         }
 
-        if matches!(D::NDIM, None | Some(1)) {
-            if let Ok(array) = ob.extract::<Vec<T>>() {
-                let res = Array::from_vec(array).into_dimensionality().ok()?;
-                return Some(PyArrayLike(ArrayLike::Owned(res, ob.py())));
-            }
+        if matches!(D::NDIM, None | Some(1))
+            && let Ok(array) = ob.extract::<Vec<T>>()
+        {
+            let res = Array::from_vec(array).into_dimensionality().ok()?;
+            return Some(PyArrayLike(ArrayLike::Owned(res, ob.py())));
         }
 
         let sub_arrays = ob
