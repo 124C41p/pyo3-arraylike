@@ -13,9 +13,9 @@ readme = "README.md"
 
 [dependencies]
 ndarray = ">= 0.15, < 0.18"
-numpy = "^0.28"
+numpy = "^0.29"
 
 [dev-dependencies]
-pyo3 = { version = "^0.28", default-features = false, features = [
+pyo3 = { version = "^0.29", default-features = false, features = [
     "auto-initialize",
 ] }
